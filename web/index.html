@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="UTD Elevator Challenge — Interactive elevator simulator with 9 progressive levels of complexity." />
+  <title>Elevator Challenge — UTD</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/elevator-sim.css" />
+  <link rel="stylesheet" href="css/utilities.css" />
+</head>
+<body>
+  <div class="app" id="app">
+
+    <!-- ====== Sidebar ====== -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar__header">
+        <div class="sidebar__logo">E</div>
+        <div class="sidebar__brand">
+          <span class="sidebar__brand-name">Elevator Challenge</span>
+          <span class="sidebar__brand-sub">UTD — 9 Levels</span>
+        </div>
+      </div>
+
+      <nav class="sidebar__nav">
+        <div class="sidebar__section-label">Challenge Levels</div>
+
+        <button class="sidebar__item active" data-level="1" id="nav-level-1">
+          <span class="sidebar__item-icon">🏗️</span>
+          Level 1
+          <span class="sidebar__item-badge sidebar__item-badge--done">Done</span>
+        </button>
+
+        <button class="sidebar__item" data-level="2" id="nav-level-2">
+          <span class="sidebar__item-icon">🧪</span>
+          Level 2
+          <span class="sidebar__item-badge sidebar__item-badge--locked">Locked</span>
+        </button>
+
+        <button class="sidebar__item" data-level="3" id="nav-level-3">
+          <span class="sidebar__item-icon">📊</span>
+          Level 3
+          <span class="sidebar__item-badge sidebar__item-badge--locked">Locked</span>
+        </button>
+
+        <button class="sidebar__item" data-level="4" id="nav-level-4">
+          <span class="sidebar__item-icon">👥</span>
+          Level 4
+          <span class="sidebar__item-badge sidebar__item-badge--locked">Locked</span>
+        </button>
+
+        <button class="sidebar__item" data-level="5" id="nav-level-5">
+          <span class="sidebar__item-icon">🔀</span>
+          Level 5
+          <span class="sidebar__item-badge sidebar__item-badge--locked">Locked</span>
+        </button>
+
+        <button class="sidebar__item" data-level="6" id="nav-level-6">
+          <span class="sidebar__item-icon">🕐</span>
+          Level 6
+          <span class="sidebar__item-badge sidebar__item-badge--locked">Locked</span>
+        </button>
+
+        <button class="sidebar__item" data-level="7" id="nav-level-7">
+          <span class="sidebar__item-icon">⚡</span>
+          Level 7
+          <span class="sidebar__item-badge sidebar__item-badge--locked">Locked</span>
+        </button>
+
+        <div class="sidebar__section-label" style="margin-top: var(--space-2);">On Steroids</div>
+
+        <button class="sidebar__item" data-level="8" id="nav-level-8">
+          <span class="sidebar__item-icon">🖥️</span>
+          Level 8
+          <span class="sidebar__item-badge sidebar__item-badge--locked">Locked</span>
+        </button>
+
+        <button class="sidebar__item" data-level="9" id="nav-level-9">
+          <span class="sidebar__item-icon">🌐</span>
+          Level 9
+          <span class="sidebar__item-badge sidebar__item-badge--locked">Locked</span>
+        </button>
+      </nav>
+
+      <div class="sidebar__footer">
+        <button class="sidebar__theme-toggle" id="theme-toggle">
+          <span id="theme-icon">🌙</span>
+          <span id="theme-label">Dark Mode</span>
+          <span class="theme-toggle-track">
+            <span class="theme-toggle-thumb"></span>
+          </span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ====== Sidebar Overlay (mobile) ====== -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <!-- ====== Main ====== -->
+    <main class="main">
+      <!-- Header -->
+      <header class="header">
+        <div class="header__left">
+          <button class="header__menu-btn btn btn--ghost btn--icon" id="menu-btn">
+            ☰
+          </button>
+          <div class="header__breadcrumb">
+            <span>Elevator Challenge</span>
+            <span class="header__breadcrumb-sep">/</span>
+            <span class="header__breadcrumb-current" id="breadcrumb-current">Level 1</span>
+          </div>
+        </div>
+        <div class="header__right">
+          <span class="badge badge--info" id="header-badge">🏗️ Foundation</span>
+        </div>
+      </header>
+
+      <!-- Dynamic Content -->
+      <div class="content">
+        <div class="content__max" id="page-content">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

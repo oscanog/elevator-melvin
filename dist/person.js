@@ -1,11 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-class Person {
+export default class Person {
     constructor(name, currentFloor, dropOffFloor) {
         this.name = name;
         this.currentFloor = currentFloor;
         this.dropOffFloor = dropOffFloor;
     }
 }
-exports.default = Person;
 //# sourceMappingURL=person.js.map

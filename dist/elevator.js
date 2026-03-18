@@ -1,6 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-class Elevator {
+export default class Elevator {
     constructor() {
         this.currentFloor = 0;
         this.stops = 0;
@@ -148,5 +146,4 @@ class Elevator {
         this.requests = [];
     }
 }
-exports.default = Elevator;
 //# sourceMappingURL=elevator.js.map

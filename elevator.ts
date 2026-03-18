@@ -1,6 +1,12 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-class Elevator {
+import Person from './person';
+
+export default class Elevator {
+    currentFloor: number;
+    stops: number;
+    floorsTraversed: number;
+    requests: any[];
+    riders: Person[];
+
     constructor() {
         this.currentFloor = 0;
         this.stops = 0;
@@ -8,6 +14,7 @@ class Elevator {
         this.requests = [];
         this.riders = [];
     }
+
     dispatch() {
         this.requests.forEach(request => {
             if (this.riders.length || this.requests.length) {
@@ -15,11 +22,13 @@ class Elevator {
             }
         });
     }
-    goToFloor(person) {
+
+    goToFloor(person: any) {
         console.log('!!! ENTERING goToFloor !!!');
         console.log('Person:', person);
         console.log('Current floor:', this.currentFloor);
         console.log('Requests:', this.requests);
+
         // Move to pick up floor
         console.log('Moving to pickup floor:', person.currentFloor);
         while (this.currentFloor < person.currentFloor) {
@@ -31,14 +40,15 @@ class Elevator {
             this.moveDown();
         }
         console.log('Arrived at pickup floor:', this.currentFloor);
+
         // Check if we need to stop for pickup
         if (this.hasStop()) {
             console.log('Has stop for pickup, calling hasPickup');
             this.hasPickup();
-        }
-        else {
+        } else {
             console.log('No stop for pickup');
         }
+
         // Move to drop off floor
         console.log('Moving to dropoff floor:', person.dropOffFloor);
         while (this.currentFloor < person.dropOffFloor) {
@@ -48,21 +58,24 @@ class Elevator {
             this.moveDown();
         }
         console.log('Arrived at dropoff floor:', this.currentFloor);
+
         // Check if we need to stop for dropoff
         if (this.hasStop()) {
             console.log('Has stop for dropoff, calling hasDropoff');
             this.hasDropoff();
-        }
-        else {
+        } else {
             console.log('No stop for dropoff');
         }
+
         // Return to lobby if needed
         if (this.checkReturnToLoby()) {
             console.log('Returning to lobby');
             this.returnToLoby();
         }
+
         console.log('=== goToFloor end ===');
     }
+
     moveUp() {
         console.log('moveUp called');
         this.currentFloor++;
@@ -71,6 +84,7 @@ class Elevator {
             this.stops++;
         }
     }
+
     moveDown() {
         console.log('moveDown called');
         if (this.currentFloor > 0) {
@@ -81,7 +95,8 @@ class Elevator {
             }
         }
     }
-    hasStop() {
+
+    hasStop(): boolean {
         // Check for pickup
         let hasPickup = false;
         for (let i = 0; i < this.requests.length; i++) {
@@ -90,6 +105,7 @@ class Elevator {
                 break;
             }
         }
+
         // Check for dropoff
         let hasDropoff = false;
         for (let i = 0; i < this.riders.length; i++) {
@@ -98,13 +114,16 @@ class Elevator {
                 break;
             }
         }
+
         console.log('hasStop check:', { currentFloor: this.currentFloor, hasPickup, hasDropoff, requestsLength: this.requests.length, ridersLength: this.riders.length });
         return hasPickup || hasDropoff;
     }
+
     hasPickup() {
         console.log('=== hasPickup ===');
         console.log('Current floor:', this.currentFloor);
         console.log('Requests:', this.requests);
+
         const index = this.requests.findIndex(req => req.currentFloor === this.currentFloor);
         if (index !== -1) {
             const person = this.requests.splice(index, 1)[0];
@@ -112,34 +131,37 @@ class Elevator {
             console.log('Picked up person:', person);
             console.log('Requests after splice:', this.requests);
             console.log('Riders after push:', this.riders);
-        }
-        else {
+        } else {
             console.log('No request found at current floor');
         }
     }
+
     hasDropoff() {
         console.log('=== hasDropoff ===');
         console.log('Current floor:', this.currentFloor);
         console.log('Riders:', this.riders);
+
         const index = this.riders.findIndex(rider => rider.dropOffFloor === this.currentFloor);
         if (index !== -1) {
             this.riders.splice(index, 1);
             console.log('Dropped off person at index', index);
             console.log('Riders after splice:', this.riders);
-        }
-        else {
+        } else {
             console.log('No rider to drop off at current floor');
         }
     }
-    checkReturnToLoby() {
+
+    checkReturnToLoby(): boolean {
         // For testing purposes, we'll always return false to avoid automatic lobby return
         return false;
     }
+
     returnToLoby() {
         while (this.currentFloor > 0) {
             this.moveDown();
         }
     }
+
     reset() {
         this.currentFloor = 0;
         this.stops = 0;
@@ -148,5 +170,3 @@ class Elevator {
         this.requests = [];
     }
 }
-exports.default = Elevator;
-//# sourceMappingURL=elevator.js.map
