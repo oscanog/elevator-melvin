@@ -9,11 +9,9 @@ class Elevator {
         this.riders = [];
     }
     dispatch() {
-        this.requests.forEach(request => {
-            if (this.riders.length || this.requests.length) {
-                this.goToFloor(request);
-            }
-        });
+        while (this.requests.length > 0) {
+            this.goToFloor(this.requests[0]);
+        }
     }
     goToFloor(person) {
         console.log('!!! ENTERING goToFloor !!!');
@@ -31,14 +29,7 @@ class Elevator {
             this.moveDown();
         }
         console.log('Arrived at pickup floor:', this.currentFloor);
-        // Check if we need to stop for pickup
-        if (this.hasStop()) {
-            console.log('Has stop for pickup, calling hasPickup');
-            this.hasPickup();
-        }
-        else {
-            console.log('No stop for pickup');
-        }
+        this.hasPickup(person);
         // Move to drop off floor
         console.log('Moving to dropoff floor:', person.dropOffFloor);
         while (this.currentFloor < person.dropOffFloor) {
@@ -48,14 +39,7 @@ class Elevator {
             this.moveDown();
         }
         console.log('Arrived at dropoff floor:', this.currentFloor);
-        // Check if we need to stop for dropoff
-        if (this.hasStop()) {
-            console.log('Has stop for dropoff, calling hasDropoff');
-            this.hasDropoff();
-        }
-        else {
-            console.log('No stop for dropoff');
-        }
+        this.hasDropoff(person);
         // Return to lobby if needed
         if (this.checkReturnToLoby()) {
             console.log('Returning to lobby');
@@ -67,18 +51,12 @@ class Elevator {
         console.log('moveUp called');
         this.currentFloor++;
         this.floorsTraversed++;
-        if (this.hasStop()) {
-            this.stops++;
-        }
     }
     moveDown() {
         console.log('moveDown called');
         if (this.currentFloor > 0) {
             this.currentFloor--;
             this.floorsTraversed++;
-            if (this.hasStop()) {
-                this.stops++;
-            }
         }
     }
     hasStop() {
@@ -101,14 +79,17 @@ class Elevator {
         console.log('hasStop check:', { currentFloor: this.currentFloor, hasPickup, hasDropoff, requestsLength: this.requests.length, ridersLength: this.riders.length });
         return hasPickup || hasDropoff;
     }
-    hasPickup() {
+    hasPickup(targetPerson) {
         console.log('=== hasPickup ===');
         console.log('Current floor:', this.currentFloor);
         console.log('Requests:', this.requests);
-        const index = this.requests.findIndex(req => req.currentFloor === this.currentFloor);
-        if (index !== -1) {
+        const index = targetPerson
+            ? this.requests.findIndex(req => req === targetPerson)
+            : this.requests.findIndex(req => req.currentFloor === this.currentFloor);
+        if (index !== -1 && this.requests[index].currentFloor === this.currentFloor) {
             const person = this.requests.splice(index, 1)[0];
             this.riders.push(person);
+            this.stops++;
             console.log('Picked up person:', person);
             console.log('Requests after splice:', this.requests);
             console.log('Riders after push:', this.riders);
@@ -117,13 +98,16 @@ class Elevator {
             console.log('No request found at current floor');
         }
     }
-    hasDropoff() {
+    hasDropoff(targetPerson) {
         console.log('=== hasDropoff ===');
         console.log('Current floor:', this.currentFloor);
         console.log('Riders:', this.riders);
-        const index = this.riders.findIndex(rider => rider.dropOffFloor === this.currentFloor);
-        if (index !== -1) {
+        const index = targetPerson
+            ? this.riders.findIndex(rider => rider === targetPerson)
+            : this.riders.findIndex(rider => rider.dropOffFloor === this.currentFloor);
+        if (index !== -1 && this.riders[index].dropOffFloor === this.currentFloor) {
             this.riders.splice(index, 1);
+            this.stops++;
             console.log('Dropped off person at index', index);
             console.log('Riders after splice:', this.riders);
         }

@@ -79,7 +79,7 @@ function buildMethodCases() {
         },
         {
             id: 'dispatch-processes-the-first-queued-request',
-            title: 'dispatch processes the first queued request with the current implementation',
+            title: 'dispatch processes every queued request in request order',
             category: 'method',
             coveredMethods: ['dispatch'],
             requirementKeys: ['methods'],
@@ -90,13 +90,13 @@ function buildMethodCases() {
                 elevator.requests = [first, second];
                 elevator.dispatch();
                 (0, index_1.expectSnapshot)(elevator, {
-                    currentFloor: 7,
-                    stops: 2,
-                    floorsTraversed: 7,
-                    requestsCount: 1,
+                    currentFloor: 3,
+                    stops: 4,
+                    floorsTraversed: 13,
+                    requestsCount: 0,
                     ridersCount: 0,
                 }, 'Dispatch');
-                (0, index_1.expectEqual)(elevator.requests[0]?.name, 'Bob', 'Dispatch leaves the second request queued');
+                (0, index_1.expectEqual)(elevator.requests.length, 0, 'Dispatch clears queued requests');
             },
         },
         {
