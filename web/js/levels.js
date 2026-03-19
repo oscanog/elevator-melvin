@@ -168,11 +168,16 @@ export const LEVELS = [
     icon: 'E6',
     badge: 'Time-Based',
     badgeClass: 'badge--warning',
-    status: 'locked',
-    statusLabel: 'Locked',
+    status: 'done',
+    statusLabel: 'Done',
     description: 'Return to the lobby before noon and stay at the last floor after noon.',
     branchFocus: 'Inject time as a policy so noon behavior stays testable.',
     capabilityTags: ['clock', 'idle policy', 'business rules'],
+    demoTimeLabel: '11:30 a.m. demo • Before Noon',
+    simulationOptions: {
+      idlePolicy: 'time-based',
+      fixedTime: '11:30',
+    },
     architectureNotes: [
       'Idle behavior should come from a strategy or policy, not hardcoded wall-clock checks.',
       'The engine should accept a test clock to keep scenarios deterministic.',
@@ -314,6 +319,25 @@ function renderRequirements(level, isDone) {
             <span>${requirement}</span>
           </div>
         `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderLevelDemoLabel(level) {
+  if (!level.demoTimeLabel) {
+    return '';
+  }
+
+  return `
+    <div class="card sim-card-compact" style="margin-bottom:16px; border-color: rgba(245, 158, 11, 0.35); box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);">
+      <div class="card__header" style="margin-bottom:var(--space-2);">
+        <span class="card__title">Demo Clock</span>
+        <span class="badge badge--warning">Level ${level.id}</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <span style="font-size:var(--text-lg); font-weight:var(--font-semibold); color:var(--text-primary);">${level.demoTimeLabel}</span>
+        <span style="font-size:var(--text-sm); color:var(--text-secondary);">This simulation is pinned to a before-noon clock so the elevator returns to the lobby when it becomes fully idle.</span>
       </div>
     </div>
   `;
@@ -467,6 +491,7 @@ export function renderLevelPage(level, viewMode) {
     ` : isLevel3 ? `
       ${renderLevel3RunnerPanel()}
     ` : `
+      ${renderLevelDemoLabel(level)}
       <div class="sim-controls" id="sim-controls">
         <div class="sim-actions-row" style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
             <div class="sim-actions" style="display:flex; gap:12px; width:100%;">

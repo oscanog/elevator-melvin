@@ -10,8 +10,8 @@ exports.runSuiteTestCase = runSuiteTestCase;
 exports.buildCoverageItems = buildCoverageItems;
 exports.buildRequirementStatus = buildRequirementStatus;
 exports.buildSuiteSummary = buildSuiteSummary;
-function createElevator(dependencies) {
-    return new dependencies.Elevator();
+function createElevator(dependencies, config) {
+    return new dependencies.Elevator(config);
 }
 function createPerson(dependencies, name, currentFloor, dropOffFloor) {
     return new dependencies.Person(name, currentFloor, dropOffFloor);

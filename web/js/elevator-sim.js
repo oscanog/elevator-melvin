@@ -8,8 +8,10 @@ export const PERSON_COLORS = [
 ];
 
 export class ElevatorSim {
-  constructor(totalFloors = 10) {
+  constructor(totalFloors = 10, options = {}) {
     this.totalFloors = totalFloors;
+    this.idlePolicy = options.idlePolicy ?? 'none';
+    this.now = options.now ?? (() => new Date());
     this.currentFloor = 0;
     this.requests = [];
     this.riders = [];
@@ -140,6 +142,17 @@ export class ElevatorSim {
       await this._closeDoors();
     }
 
+    if (this._shouldReturnToLobby()) {
+      this._addLog('🕚 Before noon and idle — returning to lobby');
+      this._notify();
+      await this._checkpoint();
+      await this._moveTo(0);
+    } else if (this.idlePolicy === 'time-based' && this.riders.length === 0 && this.requests.length === 0) {
+      this._addLog(`🕐 After noon and idle — staying on Floor ${this.currentFloor}`);
+      this._notify();
+      await this._checkpoint();
+    }
+
     this.state = 'complete';
     this.direction = null;
     this._addLog('🏁 All requests complete — elevator idle');
@@ -214,6 +227,12 @@ export class ElevatorSim {
     this.state = 'idle';
     this._notify();
     await this._wait(this.baseDelay * 0.4);
+  }
+
+  _shouldReturnToLobby() {
+    if (this.idlePolicy !== 'time-based') return false;
+    if (this.riders.length > 0 || this.requests.length > 0) return false;
+    return this.now().getHours() < 12;
   }
 
   _addLog(message) {

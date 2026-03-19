@@ -1,16 +1,22 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class Elevator {
-    constructor() {
+    constructor(config = {}) {
         this.currentFloor = 0;
         this.stops = 0;
         this.floorsTraversed = 0;
         this.requests = [];
         this.riders = [];
+        this.idlePolicy = config.idlePolicy ?? 'none';
+        this.now = config.now ?? (() => new Date());
     }
     dispatch() {
         while (this.requests.length > 0) {
             this.goToFloor(this.requests[0]);
+        }
+        if (this.checkReturnToLoby()) {
+            console.log('Returning to lobby');
+            this.returnToLoby();
         }
     }
     goToFloor(person) {
@@ -40,11 +46,6 @@ class Elevator {
         }
         console.log('Arrived at dropoff floor:', this.currentFloor);
         this.hasDropoff(person);
-        // Return to lobby if needed
-        if (this.checkReturnToLoby()) {
-            console.log('Returning to lobby');
-            this.returnToLoby();
-        }
         console.log('=== goToFloor end ===');
     }
     moveUp() {
@@ -116,8 +117,13 @@ class Elevator {
         }
     }
     checkReturnToLoby() {
-        // For testing purposes, we'll always return false to avoid automatic lobby return
-        return false;
+        if (this.idlePolicy !== 'time-based') {
+            return false;
+        }
+        if (this.riders.length > 0 || this.requests.length > 0) {
+            return false;
+        }
+        return this.now().getHours() < 12;
     }
     returnToLoby() {
         while (this.currentFloor > 0) {

@@ -511,7 +511,23 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    sim = new ElevatorSim(TOTAL_FLOORS);
+    const simOptions = {};
+    const fixedTime = level.simulationOptions?.fixedTime;
+
+    if (level.simulationOptions?.idlePolicy) {
+      simOptions.idlePolicy = level.simulationOptions.idlePolicy;
+    }
+
+    if (fixedTime) {
+      const [hours, minutes] = fixedTime.split(':').map(value => Number.parseInt(value, 10));
+      simOptions.now = () => {
+        const demoTime = new Date('2026-03-20T00:00:00');
+        demoTime.setHours(hours, minutes, 0, 0);
+        return demoTime;
+      };
+    }
+
+    sim = new ElevatorSim(TOTAL_FLOORS, simOptions);
     sim.setSpeed(currentSpeed);
 
     window.setTimeout(() => {

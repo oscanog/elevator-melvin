@@ -4,6 +4,11 @@ export interface SuitePersonLike {
     dropOffFloor: number;
 }
 
+export interface SuiteElevatorConfig {
+    idlePolicy?: 'none' | 'time-based';
+    now?: () => Date;
+}
+
 export interface SuiteElevatorLike {
     currentFloor: number;
     stops: number;
@@ -23,7 +28,7 @@ export interface SuiteElevatorLike {
 }
 
 export interface SuiteDependencies {
-    Elevator: new () => SuiteElevatorLike;
+    Elevator: new (config?: SuiteElevatorConfig) => SuiteElevatorLike;
     Person: new (name: string, currentFloor: number, dropOffFloor: number) => SuitePersonLike;
 }
 
@@ -77,8 +82,11 @@ export interface SuiteTestCaseResult<Category extends string, RequirementKey ext
     error: string | null;
 }
 
-export function createElevator(dependencies: SuiteDependencies): SuiteElevatorLike {
-    return new dependencies.Elevator();
+export function createElevator(
+    dependencies: SuiteDependencies,
+    config?: SuiteElevatorConfig
+): SuiteElevatorLike {
+    return new dependencies.Elevator(config);
 }
 
 export function createPerson(
