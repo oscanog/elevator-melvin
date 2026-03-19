@@ -3,24 +3,34 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const chai_1 = require("chai");
+const level2_suite_1 = require("../level2-suite");
 const elevator_1 = __importDefault(require("../elevator"));
 const person_1 = __importDefault(require("../person"));
-describe('Elevator', function () {
-    let elevator = new elevator_1.default();
-    beforeEach(function () {
-        elevator.reset();
+const level2Dependencies = { Elevator: elevator_1.default, Person: person_1.default };
+describe('Elevator Level 2 suite', function () {
+    describe('Scenario coverage', function () {
+        level2_suite_1.LEVEL2_TEST_CASES
+            .filter(testCase => testCase.category === 'scenario')
+            .forEach(testCase => {
+            it(testCase.title, () => {
+                const result = (0, level2_suite_1.runLevel2TestCase)(testCase, level2Dependencies, { silent: true });
+                if (!result.pass) {
+                    throw new Error(result.error ?? `${testCase.title} failed`);
+                }
+            });
+        });
     });
-    it('should bring a rider to a floor above their current floor', () => {
-        let mockUser = new person_1.default("Brittany", 2, 5);
-        elevator.requests.push(mockUser);
-        elevator.goToFloor(mockUser);
-        //check if the elevator automatically  returns to the loby and set the end values
-        const endFloor = elevator.checkReturnToLoby() ? 0 : 5;
-        const floorsTraversed = elevator.checkReturnToLoby() ? 10 : 5;
-        chai_1.assert.equal(elevator.currentFloor, endFloor);
-        chai_1.assert.equal(elevator.floorsTraversed, floorsTraversed);
-        chai_1.assert.equal(elevator.stops, 2);
+    describe('Method coverage', function () {
+        level2_suite_1.LEVEL2_TEST_CASES
+            .filter(testCase => testCase.category === 'method')
+            .forEach(testCase => {
+            it(testCase.title, () => {
+                const result = (0, level2_suite_1.runLevel2TestCase)(testCase, level2Dependencies, { silent: true });
+                if (!result.pass) {
+                    throw new Error(result.error ?? `${testCase.title} failed`);
+                }
+            });
+        });
     });
 });
 //# sourceMappingURL=elevator_test.js.map

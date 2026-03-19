@@ -2,6 +2,8 @@
    Level Definitions, Routes, and Renderers
    ======================================== */
 
+import { renderLevel2RunnerPanel } from './level2-runner.js';
+
 export const VIEW_MODES = [
   {
     id: '3d',
@@ -55,8 +57,8 @@ export const LEVELS = [
     icon: 'E2',
     badge: 'Testing',
     badgeClass: 'badge--warning',
-    status: 'locked',
-    statusLabel: 'Locked',
+    status: 'done',
+    statusLabel: 'Done',
     description: 'Create tests for riders going up and down, including stops and floors traversed.',
     branchFocus: 'Introduce a reusable scenario matrix and method-level test coverage.',
     capabilityTags: ['tdd', 'scenario matrix', 'method coverage'],
@@ -318,7 +320,13 @@ function renderRequirements(level, isDone) {
 
 function renderReadinessCard(level) {
   return `
-    <article class="home-level-card card ${level.status === 'done' ? 'home-level-card--done' : ''}">
+    <article
+      class="home-level-card card ${level.status === 'done' ? 'home-level-card--done' : ''}"
+      data-route="${getLevelRoute(level.id)}"
+      role="link"
+      tabindex="0"
+      aria-label="Open Level ${level.id}"
+    >
       <div class="home-level-card__header">
         <div>
           <span class="home-level-card__eyebrow">Level ${level.id}</span>
@@ -391,6 +399,7 @@ export function renderHomePage({ viewMode }) {
 export function renderLevelPage(level, viewMode) {
   const isLocked = level.status === 'locked';
   const isDone = level.status === 'done';
+  const isLevel2 = level.id === 2;
 
   const leftColumnContent = `
     <div class="sim-canvas-wrap" id="sim-canvas-container"></div>
@@ -451,6 +460,8 @@ export function renderLevelPage(level, viewMode) {
         </div>
       </div>
       ${renderRequirements(level, false)}
+    ` : isLevel2 ? `
+      ${renderLevel2RunnerPanel()}
     ` : `
       <div class="sim-controls" id="sim-controls">
         <div class="sim-actions-row" style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
@@ -500,7 +511,6 @@ export function renderLevelPage(level, viewMode) {
         </div>
         <div class="level-page__actions">
           ${renderViewModeSwitch(viewMode)}
-          <button class="btn btn--secondary btn--sm" type="button" data-route="/">Home</button>
         </div>
       </div>
 

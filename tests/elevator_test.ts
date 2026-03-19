@@ -1,25 +1,38 @@
-import { assert } from 'chai';
+import {
+    LEVEL2_TEST_CASES,
+    runLevel2TestCase,
+} from '../level2-suite';
 import Elevator from '../elevator';
 import Person from '../person';
 
-describe('Elevator', function () {
-    let elevator = new Elevator();
+const level2Dependencies = { Elevator, Person };
 
-    beforeEach(function () {
-        elevator.reset();
+describe('Elevator Level 2 suite', function () {
+    describe('Scenario coverage', function () {
+        LEVEL2_TEST_CASES
+            .filter(testCase => testCase.category === 'scenario')
+            .forEach(testCase => {
+                it(testCase.title, () => {
+                    const result = runLevel2TestCase(testCase, level2Dependencies, { silent: true });
+
+                    if (!result.pass) {
+                        throw new Error(result.error ?? `${testCase.title} failed`);
+                    }
+                });
+            });
     });
 
-    it('should bring a rider to a floor above their current floor', () => {
-        let mockUser = new Person("Brittany", 2, 5);
-        elevator.requests.push(mockUser);
-        elevator.goToFloor(mockUser);
+    describe('Method coverage', function () {
+        LEVEL2_TEST_CASES
+            .filter(testCase => testCase.category === 'method')
+            .forEach(testCase => {
+                it(testCase.title, () => {
+                    const result = runLevel2TestCase(testCase, level2Dependencies, { silent: true });
 
-        //check if the elevator automatically  returns to the loby and set the end values
-        const endFloor = elevator.checkReturnToLoby() ? 0 : 5;
-        const floorsTraversed = elevator.checkReturnToLoby() ? 10 : 5;
-
-        assert.equal(elevator.currentFloor, endFloor);
-        assert.equal(elevator.floorsTraversed, floorsTraversed);
-        assert.equal(elevator.stops, 2);
+                    if (!result.pass) {
+                        throw new Error(result.error ?? `${testCase.title} failed`);
+                    }
+                });
+            });
     });
 });

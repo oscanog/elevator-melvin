@@ -12,11 +12,13 @@ import {
 } from './levels.js';
 import { ElevatorSim } from './elevator-sim.js';
 import { createRenderer } from './renderers.js';
+import { setupLevel2Runner } from './level2-runner.js';
 import './theme.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const pageContent = document.getElementById('page-content');
   const breadcrumbCurrent = document.getElementById('breadcrumb-current');
+  const breadcrumbSeparator = document.querySelector('.header__breadcrumb-sep');
   const headerBadge = document.getElementById('header-badge');
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebar-overlay');
@@ -110,13 +112,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (route.name === 'level') {
       const level = getLevelById(route.levelId);
       breadcrumbCurrent.textContent = `Level ${level.id}`;
+      if (breadcrumbCurrent) breadcrumbCurrent.hidden = false;
+      if (breadcrumbSeparator) breadcrumbSeparator.hidden = false;
       headerBadge.textContent = `${level.icon} ${level.badge}`;
       headerBadge.className = `badge ${level.badgeClass}`;
       document.title = `${level.title} - Elevator Challenge`;
       return;
     }
 
-    breadcrumbCurrent.textContent = 'Home';
+    if (breadcrumbCurrent) breadcrumbCurrent.hidden = true;
+    if (breadcrumbSeparator) breadcrumbSeparator.hidden = true;
     headerBadge.textContent = currentViewMode === '2d' ? '2D Front View' : '3D Building View';
     headerBadge.className = 'badge badge--muted';
     document.title = 'Elevator Challenge - Home';
@@ -686,6 +691,9 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.classList.remove('modal-open');
       const level = getLevelById(currentRoute.levelId);
       pageContent.innerHTML = renderLevelPage(level, currentViewMode);
+      if (level.id === 2) {
+        setupLevel2Runner();
+      }
       updateSidebar(level.id);
       updateHeader(currentRoute);
       syncViewModeUI();
@@ -780,6 +788,16 @@ document.addEventListener('DOMContentLoaded', () => {
       event.preventDefault();
       setHomeModalOpen(false);
     }
+  });
+
+  document.addEventListener('keydown', event => {
+    const routeCard = event.target.closest('.home-level-card[data-route]');
+    if (!routeCard) return;
+
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+
+    event.preventDefault();
+    navigateToPath(routeCard.dataset.route);
   });
 
   window.addEventListener('resize', () => {
