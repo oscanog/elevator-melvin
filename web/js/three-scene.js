@@ -511,6 +511,7 @@ export class BuildingScene {
 
   _syncPersons(allPersons, cabFloor) {
     const currentIds = new Set(allPersons.map(p => p.id));
+    const slotCounts = new Map();
 
     for (const [id, group] of this.personsMap) {
       if (!currentIds.has(id)) {
@@ -526,7 +527,7 @@ export class BuildingScene {
         this.personsMap.set(p.id, pg);
 
         pg.position.set(
-          -0.6 - idx * 0.5,
+          -0.6,
           p.currentFloor * FLOOR_H + 0.4 + 0.03,
           BLDG_D / 2 + LOBBY_D * 0.7,
         );
@@ -536,34 +537,96 @@ export class BuildingScene {
       }
 
       const mesh = this.personsMap.get(p.id);
+      const key = this._personSlotKey(p, cabFloor);
+      const slotIndex = slotCounts.get(key) ?? 0;
+      slotCounts.set(key, slotIndex + 1);
+      const target = this._personTargetPosition(p, slotIndex);
 
-      if (p.status === 'waiting') {
-        mesh._tx = -0.5 - idx * 0.5;
-        mesh._ty = p.currentFloor * FLOOR_H + 0.4 + 0.03;
-        mesh._tz = BLDG_D / 2 + LOBBY_D * 0.5;
-        mesh._isRiding = false;
-      } else if (p.status === 'walking-to-elevator') {
-        mesh._tx = 0;
-        mesh._ty = p.currentFloor * FLOOR_H + 0.4 + 0.03;
-        mesh._tz = BLDG_D / 2 - SHAFT_D / 2;
-        mesh._isRiding = false;
-      } else if (p.status === 'riding') {
-        mesh._tx = (idx % 2 === 0 ? -0.3 : 0.3);
-        mesh._ty = this._targetCabY - FLOOR_H / 2 + 0.03;
-        mesh._tz = BLDG_D / 2 - SHAFT_D / 2 + 0.15;
-        mesh._isRiding = true;
-      } else if (p.status === 'walking-out') {
-        mesh._tx = 0.6 + idx * 0.5;
-        mesh._ty = p.dropOffFloor * FLOOR_H + 0.4 + 0.03;
-        mesh._tz = BLDG_D / 2 + LOBBY_D * 0.4;
-        mesh._isRiding = false;
-      } else if (p.status === 'done') {
-        mesh._tx = 1.5 + idx * 0.5;
-        mesh._ty = p.dropOffFloor * FLOOR_H + 0.4 + 0.03;
-        mesh._tz = BLDG_D / 2 + LOBBY_D * 0.7;
-        mesh._isRiding = false;
-      }
+      mesh._tx = target.x;
+      mesh._ty = target.y;
+      mesh._tz = target.z;
+      mesh._isRiding = target.isRiding;
     });
+  }
+
+  _personSlotKey(person, cabFloor) {
+    if (person.status === 'riding') {
+      return `riding:${cabFloor}`;
+    }
+
+    if (person.status === 'walking-to-elevator') {
+      return `boarding:${person.currentFloor}`;
+    }
+
+    if (person.status === 'walking-out') {
+      return `exiting:${person.dropOffFloor}`;
+    }
+
+    if (person.status === 'done') {
+      return `done:${person.dropOffFloor}`;
+    }
+
+    return `waiting:${person.currentFloor}`;
+  }
+
+  _personTargetPosition(person, slotIndex) {
+    const floor = person.status === 'riding' ? null : (person.status === 'walking-out' || person.status === 'done')
+      ? person.dropOffFloor
+      : person.currentFloor;
+    const baseY = floor === null
+      ? this._targetCabY - FLOOR_H / 2 + 0.03
+      : floor * FLOOR_H + 0.4 + 0.03;
+
+    if (person.status === 'riding') {
+      const column = slotIndex % 2;
+      const row = Math.floor(slotIndex / 2);
+
+      return {
+        x: column === 0 ? -0.3 : 0.3,
+        y: baseY + row * 0.1,
+        z: BLDG_D / 2 - SHAFT_D / 2 + 0.05 - row * 0.12,
+        isRiding: true,
+      };
+    }
+
+    if (person.status === 'walking-to-elevator') {
+      const offset = slotIndex - Math.floor(slotIndex / 2);
+
+      return {
+        x: -0.18 + (slotIndex % 2) * 0.36,
+        y: baseY,
+        z: BLDG_D / 2 - SHAFT_D / 2 + 0.25 - offset * 0.12,
+        isRiding: false,
+      };
+    }
+
+    const row = Math.floor(slotIndex / 3);
+    const column = slotIndex % 3;
+
+    if (person.status === 'walking-out') {
+      return {
+        x: 0.45 + column * 0.34,
+        y: baseY,
+        z: BLDG_D / 2 + 0.35 + row * 0.24,
+        isRiding: false,
+      };
+    }
+
+    if (person.status === 'done') {
+      return {
+        x: 1.1 + column * 0.34,
+        y: baseY,
+        z: BLDG_D / 2 + 0.8 + row * 0.24,
+        isRiding: false,
+      };
+    }
+
+    return {
+      x: -0.95 - column * 0.34,
+      y: baseY,
+      z: BLDG_D / 2 + 0.4 + row * 0.24,
+      isRiding: false,
+    };
   }
 
   _createPerson(color) {

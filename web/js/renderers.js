@@ -12,6 +12,10 @@ function personLane(person) {
   return 'left';
 }
 
+function personLabel(name) {
+  return name.replace(/[^a-z0-9]/gi, '').slice(0, 3).toUpperCase() || '?';
+}
+
 function renderPersonSprite(person) {
   const colorIndex = Number.isInteger(person.colorIndex) ? person.colorIndex : 0;
   const statusClass = {
@@ -24,7 +28,7 @@ function renderPersonSprite(person) {
 
   return `
     <div class="person-sprite ${statusClass} person-color-${colorIndex}" title="${person.name}">
-      <span class="person-nametag">${person.name}</span>
+      <span class="person-nametag">${personLabel(person.name)}</span>
       <span class="person-head"></span>
       <span class="person-body"></span>
       <span class="person-legs">
