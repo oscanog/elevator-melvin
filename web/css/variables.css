@@ -45,17 +45,17 @@
   --surface-bg: #f0f4f8;
   --surface-card: #ffffff;
   --surface-card-hover: #f8fafc;
-  --surface-sidebar: var(--color-navy-900);
-  --surface-sidebar-hover: var(--color-navy-700);
-  --surface-sidebar-active: var(--color-primary-600);
+  --surface-sidebar: #f8fbff;
+  --surface-sidebar-hover: #eef4ff;
+  --surface-sidebar-active: #dceaff;
 
   /* ---- Text (Light Mode defaults) ---- */
   --text-primary: var(--color-gray-900);
   --text-secondary: var(--color-gray-600);
   --text-muted: var(--color-gray-400);
   --text-inverse: #ffffff;
-  --text-sidebar: rgba(255, 255, 255, 0.7);
-  --text-sidebar-active: #ffffff;
+  --text-sidebar: #475569;
+  --text-sidebar-active: #0f172a;
 
   /* ---- Borders ---- */
   --border-color: var(--color-gray-200);

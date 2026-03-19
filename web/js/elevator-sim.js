@@ -28,6 +28,10 @@ export class ElevatorSim {
     this._allPersons = [];
     this.stepMode = false;
     this._stepResolve = null;
+    this._atCheckpoint = false;
+    this._checkpointWaiters = [];
+    this._logSequence = 0;
+    this._stateBeforePause = null;
   }
 
   get baseDelay() {
@@ -41,28 +45,32 @@ export class ElevatorSim {
 
   pause() {
     if (this._running && !this._paused) {
+      this._stateBeforePause = this.state;
       this._paused = true;
       this.state = 'paused';
-      this._addLog('⏸️ Simulation paused');
       this._notify();
     }
   }
 
   resume() {
-    if (this._paused) {
-      this._paused = false;
-      this._addLog('▶️ Simulation resumed');
-      if (this._pauseResolve) {
-        this._pauseResolve();
-        this._pauseResolve = null;
-      }
-      this._notify();
+    if (!this._paused) return;
+
+    this._paused = false;
+    if (this._stateBeforePause) {
+      this.state = this._stateBeforePause;
+      this._stateBeforePause = null;
     }
+    if (this._pauseResolve) {
+      this._pauseResolve();
+      this._pauseResolve = null;
+    }
+    this._notify();
   }
 
   addPerson(name, currentFloor, dropOffFloor) {
     const color = PERSON_COLORS[this._colorIndex % PERSON_COLORS.length];
     this._colorIndex++;
+
     const person = {
       id: Date.now() + Math.random(),
       name,
@@ -72,6 +80,7 @@ export class ElevatorSim {
       colorIndex: (this._colorIndex - 1) % PERSON_COLORS.length,
       status: 'waiting',
     };
+
     this.requests.push(person);
     this._allPersons.push(person);
     this._addLog(`📋 ${name} requests: Floor ${currentFloor} → ${dropOffFloor}`);
@@ -81,11 +90,13 @@ export class ElevatorSim {
 
   async run() {
     if (this._running) return;
+
     this._running = true;
     this._paused = false;
 
     this._addLog('🚀 Simulation started');
     this._notify();
+    await this._checkpoint();
 
     while (this.requests.length > 0) {
       const person = this.requests[0];
@@ -96,6 +107,7 @@ export class ElevatorSim {
       person.status = 'walking-to-elevator';
       this._addLog(`🚶 ${person.name} walking to elevator on Floor ${person.currentFloor}`);
       this._notify();
+      await this._checkpoint();
       await this._wait(this.baseDelay * 0.8);
 
       this.requests.shift();
@@ -104,6 +116,7 @@ export class ElevatorSim {
       this.stops++;
       this._addLog(`🔼 ${person.name} boarded the elevator`);
       this._notify();
+      await this._checkpoint();
       await this._wait(this.baseDelay * 0.5);
 
       await this._closeDoors();
@@ -116,11 +129,13 @@ export class ElevatorSim {
       this.stops++;
       this._addLog(`🔽 ${person.name} exiting on Floor ${person.dropOffFloor}`);
       this._notify();
+      await this._checkpoint();
       await this._wait(this.baseDelay * 0.8);
 
       person.status = 'done';
       this._addLog(`✅ ${person.name} delivered to Floor ${person.dropOffFloor}`);
       this._notify();
+      await this._checkpoint();
 
       await this._closeDoors();
     }
@@ -135,10 +150,18 @@ export class ElevatorSim {
   reset() {
     this._running = false;
     this._paused = false;
+
     if (this._pauseResolve) {
       this._pauseResolve();
       this._pauseResolve = null;
     }
+
+    if (this._stepResolve) {
+      const resolve = this._stepResolve;
+      this._stepResolve = null;
+      resolve();
+    }
+
     this.currentFloor = 0;
     this.requests = [];
     this.riders = [];
@@ -150,17 +173,23 @@ export class ElevatorSim {
     this.log = [];
     this._colorIndex = 0;
     this._allPersons = [];
+    this._atCheckpoint = false;
+    this._checkpointWaiters = [];
+    this._logSequence = 0;
+    this._stateBeforePause = null;
     this._addLog('🔄 Elevator reset to lobby');
     this._notify();
   }
 
   async _moveTo(floor) {
     if (floor === this.currentFloor) return;
+
     const dir = floor > this.currentFloor ? 'up' : 'down';
     this.direction = dir;
     this.state = dir === 'up' ? 'moving-up' : 'moving-down';
     this._addLog(`${dir === 'up' ? '⬆️' : '⬇️'} Moving ${dir} to Floor ${floor}`);
     this._notify();
+    await this._checkpoint();
 
     while (this.currentFloor !== floor) {
       await this._wait(this.baseDelay);
@@ -189,8 +218,14 @@ export class ElevatorSim {
 
   _addLog(message) {
     const now = new Date();
-    const time = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    this.log.unshift({ time, message });
+    const time = now.toLocaleTimeString('en-US', {
+      hour12: true,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+
+    this.log.unshift({ id: ++this._logSequence, time, message });
     if (this.log.length > 50) this.log.pop();
   }
 
@@ -201,15 +236,65 @@ export class ElevatorSim {
   }
 
   async _wait(ms) {
-    if (this.stepMode) {
-      this._notify(); // Notify that we are waiting for step
-      await new Promise(resolve => { this._stepResolve = resolve; });
-      return;
-    }
     if (this._paused) {
-      await new Promise(resolve => { this._pauseResolve = resolve; });
+      await new Promise(resolve => {
+        this._pauseResolve = resolve;
+      });
     }
+
+    if (this.stepMode) return;
+
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async _checkpoint() {
+    if (!this.stepMode) return;
+
+    this._atCheckpoint = true;
+    this._flushCheckpointWaiters();
+
+    await new Promise(resolve => {
+      this._stepResolve = resolve;
+    });
+
+    this._stepResolve = null;
+    this._atCheckpoint = false;
+  }
+
+  _flushCheckpointWaiters() {
+    while (this._checkpointWaiters.length > 0) {
+      const resolve = this._checkpointWaiters.shift();
+      resolve();
+    }
+  }
+
+  waitForCheckpoint() {
+    if (this._atCheckpoint) return Promise.resolve();
+
+    return new Promise(resolve => {
+      this._checkpointWaiters.push(resolve);
+    });
+  }
+
+  async advanceToNextEvent() {
+    this.stepMode = true;
+
+    if (!this._running) {
+      this.run();
+      await this.waitForCheckpoint();
+      return this.getState();
+    }
+
+    if (this._paused) {
+      this.resume();
+    }
+
+    if (this._atCheckpoint) {
+      this.step();
+    }
+
+    await this.waitForCheckpoint();
+    return this.getState();
   }
 
   step() {
@@ -217,8 +302,16 @@ export class ElevatorSim {
       const resolve = this._stepResolve;
       this._stepResolve = null;
       resolve();
-    } else if (!this._running) {
-      this.run(); // Start if not running
+      return;
+    }
+
+    if (this._paused) {
+      this.resume();
+      return;
+    }
+
+    if (!this._running) {
+      this.run();
     }
   }
 

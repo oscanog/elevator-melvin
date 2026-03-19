@@ -87,8 +87,12 @@ export class BuildingScene {
     this._targetCabY = 0.5 * FLOOR_H + 0.4;
     this._doorsOpen = 0;
 
+    this._animationFrame = null;
+    this._destroyed = false;
+    this._onResize = () => this._resize();
+
     this._resize();
-    window.addEventListener('resize', () => this._resize());
+    window.addEventListener('resize', this._onResize);
   }
 
   // ==================== GROUND ====================
@@ -602,7 +606,9 @@ export class BuildingScene {
 
   renderLoop() {
     const animate = () => {
-      requestAnimationFrame(animate);
+      if (this._destroyed) return;
+
+      this._animationFrame = requestAnimationFrame(animate);
 
       // Cab
       this._cab.position.y += (this._targetCabY - this._cab.position.y) * 0.08;
@@ -660,8 +666,23 @@ export class BuildingScene {
       this.renderer.render(this.scene, this.camera);
     };
 
-
     animate();
+  }
+
+  destroy() {
+    this._destroyed = true;
+
+    if (this._animationFrame) {
+      cancelAnimationFrame(this._animationFrame);
+      this._animationFrame = null;
+    }
+
+    if (this._onResize) {
+      window.removeEventListener('resize', this._onResize);
+    }
+
+    this.renderer?.dispose?.();
+    this.container?.replaceChildren();
   }
 
   // ==================== CONSTRUCTION SITE ====================
