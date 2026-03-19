@@ -13,6 +13,7 @@ import {
 import { ElevatorSim } from './elevator-sim.js';
 import { createRenderer } from './renderers.js';
 import { setupLevel2Runner } from './level2-runner.js';
+import { setupLevel3Runner } from './level3-runner.js';
 import './theme.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -693,6 +694,8 @@ document.addEventListener('DOMContentLoaded', () => {
       pageContent.innerHTML = renderLevelPage(level, currentViewMode);
       if (level.id === 2) {
         setupLevel2Runner();
+      } else if (level.id === 3) {
+        setupLevel3Runner();
       }
       updateSidebar(level.id);
       updateHeader(currentRoute);

@@ -3,6 +3,7 @@
    ======================================== */
 
 import { renderLevel2RunnerPanel } from './level2-runner.js';
+import { renderLevel3RunnerPanel } from './level3-runner.js';
 
 export const VIEW_MODES = [
   {
@@ -84,8 +85,8 @@ export const LEVELS = [
     icon: 'E3',
     badge: 'Analytics',
     badgeClass: 'badge--info',
-    status: 'locked',
-    statusLabel: 'Locked',
+    status: 'done',
+    statusLabel: 'Done',
     description: 'Track total floors traversed and total stops to measure elevator efficiency.',
     branchFocus: 'Promote metrics from UI counters to first-class engine outputs.',
     capabilityTags: ['metrics', 'efficiency', 'observability'],
@@ -400,6 +401,7 @@ export function renderLevelPage(level, viewMode) {
   const isLocked = level.status === 'locked';
   const isDone = level.status === 'done';
   const isLevel2 = level.id === 2;
+  const isLevel3 = level.id === 3;
 
   const leftColumnContent = `
     <div class="sim-canvas-wrap" id="sim-canvas-container"></div>
@@ -462,6 +464,8 @@ export function renderLevelPage(level, viewMode) {
       ${renderRequirements(level, false)}
     ` : isLevel2 ? `
       ${renderLevel2RunnerPanel()}
+    ` : isLevel3 ? `
+      ${renderLevel3RunnerPanel()}
     ` : `
       <div class="sim-controls" id="sim-controls">
         <div class="sim-actions-row" style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">

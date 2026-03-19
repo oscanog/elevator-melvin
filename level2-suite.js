@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LEVEL2_TEST_CASES = exports.LEVEL2_SCENARIOS = exports.LEVEL2_ELEVATOR_METHODS = exports.LEVEL2_REQUIREMENTS = void 0;
 exports.runLevel2TestCase = runLevel2TestCase;
 exports.runLevel2Suite = runLevel2Suite;
+const index_1 = require("./level-suite-helpers/index");
 exports.LEVEL2_REQUIREMENTS = [
     { key: 'scenario-up', label: 'Person A goes up.' },
     { key: 'scenario-down', label: 'Person A goes down.' },
@@ -36,54 +37,12 @@ exports.LEVEL2_SCENARIOS = [
         expected: { currentFloor: 3, stops: 2, floorsTraversed: 13, requestsCount: 0, ridersCount: 0 },
     },
 ];
-function createElevator(dependencies) {
-    return new dependencies.Elevator();
-}
-function createPerson(dependencies, name, currentFloor, dropOffFloor) {
-    return new dependencies.Person(name, currentFloor, dropOffFloor);
-}
-function snapshotElevator(elevator) {
-    return {
-        currentFloor: elevator.currentFloor,
-        stops: elevator.stops,
-        floorsTraversed: elevator.floorsTraversed,
-        requestsCount: elevator.requests.length,
-        ridersCount: elevator.riders.length,
-    };
-}
-function formatValue(value) {
-    if (typeof value === 'string') {
-        return value;
-    }
-    if (value instanceof Error) {
-        return value.message;
-    }
-    try {
-        return JSON.stringify(value);
-    }
-    catch (_error) {
-        return String(value);
-    }
-}
-function expectEqual(actual, expected, label) {
-    if (actual !== expected) {
-        throw new Error(`${label}: expected ${formatValue(expected)} but received ${formatValue(actual)}`);
-    }
-}
-function expectSnapshot(elevator, expected, label) {
-    const actual = snapshotElevator(elevator);
-    expectEqual(actual.currentFloor, expected.currentFloor, `${label} currentFloor`);
-    expectEqual(actual.stops, expected.stops, `${label} stops`);
-    expectEqual(actual.floorsTraversed, expected.floorsTraversed, `${label} floorsTraversed`);
-    expectEqual(actual.requestsCount, expected.requestsCount, `${label} requestsCount`);
-    expectEqual(actual.ridersCount, expected.ridersCount, `${label} ridersCount`);
-}
 function runScenario(dependencies, personName, currentFloor, dropOffFloor, expected) {
-    const elevator = createElevator(dependencies);
-    const person = createPerson(dependencies, personName, currentFloor, dropOffFloor);
+    const elevator = (0, index_1.createElevator)(dependencies);
+    const person = (0, index_1.createPerson)(dependencies, personName, currentFloor, dropOffFloor);
     elevator.requests.push(person);
     elevator.goToFloor(person);
-    expectSnapshot(elevator, expected, `Scenario ${personName}`);
+    (0, index_1.expectSnapshot)(elevator, expected, `Scenario ${personName}`);
 }
 function buildScenarioCases() {
     return exports.LEVEL2_SCENARIOS.map(scenario => ({
@@ -108,8 +67,8 @@ function buildMethodCases() {
             coveredMethods: ['constructor'],
             requirementKeys: ['methods'],
             run: dependencies => {
-                const elevator = createElevator(dependencies);
-                expectSnapshot(elevator, {
+                const elevator = (0, index_1.createElevator)(dependencies);
+                (0, index_1.expectSnapshot)(elevator, {
                     currentFloor: 0,
                     stops: 0,
                     floorsTraversed: 0,
@@ -125,19 +84,19 @@ function buildMethodCases() {
             coveredMethods: ['dispatch'],
             requirementKeys: ['methods'],
             run: dependencies => {
-                const elevator = createElevator(dependencies);
-                const first = createPerson(dependencies, 'Alice', 2, 7);
-                const second = createPerson(dependencies, 'Bob', 8, 3);
+                const elevator = (0, index_1.createElevator)(dependencies);
+                const first = (0, index_1.createPerson)(dependencies, 'Alice', 2, 7);
+                const second = (0, index_1.createPerson)(dependencies, 'Bob', 8, 3);
                 elevator.requests = [first, second];
                 elevator.dispatch();
-                expectSnapshot(elevator, {
+                (0, index_1.expectSnapshot)(elevator, {
                     currentFloor: 7,
                     stops: 2,
                     floorsTraversed: 7,
                     requestsCount: 1,
                     ridersCount: 0,
                 }, 'Dispatch');
-                expectEqual(elevator.requests[0]?.name, 'Bob', 'Dispatch leaves the second request queued');
+                (0, index_1.expectEqual)(elevator.requests[0]?.name, 'Bob', 'Dispatch leaves the second request queued');
             },
         },
         {
@@ -147,9 +106,9 @@ function buildMethodCases() {
             coveredMethods: ['moveUp'],
             requirementKeys: ['methods'],
             run: dependencies => {
-                const elevator = createElevator(dependencies);
+                const elevator = (0, index_1.createElevator)(dependencies);
                 elevator.moveUp();
-                expectSnapshot(elevator, {
+                (0, index_1.expectSnapshot)(elevator, {
                     currentFloor: 1,
                     stops: 0,
                     floorsTraversed: 1,
@@ -165,14 +124,14 @@ function buildMethodCases() {
             coveredMethods: ['moveDown'],
             requirementKeys: ['methods'],
             run: dependencies => {
-                const elevator = createElevator(dependencies);
+                const elevator = (0, index_1.createElevator)(dependencies);
                 elevator.currentFloor = 1;
                 elevator.moveDown();
-                expectEqual(elevator.currentFloor, 0, 'moveDown currentFloor after moving');
-                expectEqual(elevator.floorsTraversed, 1, 'moveDown floorsTraversed after moving');
+                (0, index_1.expectEqual)(elevator.currentFloor, 0, 'moveDown currentFloor after moving');
+                (0, index_1.expectEqual)(elevator.floorsTraversed, 1, 'moveDown floorsTraversed after moving');
                 elevator.moveDown();
-                expectEqual(elevator.currentFloor, 0, 'moveDown lobby floor guard');
-                expectEqual(elevator.floorsTraversed, 1, 'moveDown floorsTraversed lobby guard');
+                (0, index_1.expectEqual)(elevator.currentFloor, 0, 'moveDown lobby floor guard');
+                (0, index_1.expectEqual)(elevator.floorsTraversed, 1, 'moveDown floorsTraversed lobby guard');
             },
         },
         {
@@ -182,15 +141,15 @@ function buildMethodCases() {
             coveredMethods: ['hasStop'],
             requirementKeys: ['methods'],
             run: dependencies => {
-                const elevator = createElevator(dependencies);
-                const pickup = createPerson(dependencies, 'Anne', 4, 6);
-                const rider = createPerson(dependencies, 'Chris', 1, 4);
+                const elevator = (0, index_1.createElevator)(dependencies);
+                const pickup = (0, index_1.createPerson)(dependencies, 'Anne', 4, 6);
+                const rider = (0, index_1.createPerson)(dependencies, 'Chris', 1, 4);
                 elevator.currentFloor = 4;
                 elevator.requests.push(pickup);
-                expectEqual(elevator.hasStop(), true, 'hasStop pickup detection');
+                (0, index_1.expectEqual)(elevator.hasStop(), true, 'hasStop pickup detection');
                 elevator.requests = [];
                 elevator.riders.push(rider);
-                expectEqual(elevator.hasStop(), true, 'hasStop dropoff detection');
+                (0, index_1.expectEqual)(elevator.hasStop(), true, 'hasStop dropoff detection');
             },
         },
         {
@@ -200,13 +159,13 @@ function buildMethodCases() {
             coveredMethods: ['hasPickup'],
             requirementKeys: ['methods'],
             run: dependencies => {
-                const elevator = createElevator(dependencies);
-                const request = createPerson(dependencies, 'Anne', 3, 1);
+                const elevator = (0, index_1.createElevator)(dependencies);
+                const request = (0, index_1.createPerson)(dependencies, 'Anne', 3, 1);
                 elevator.requests.push(request);
                 elevator.currentFloor = 3;
                 elevator.hasPickup();
-                expectEqual(elevator.requests.length, 0, 'hasPickup requests length');
-                expectEqual(elevator.riders[0], request, 'hasPickup riders entry');
+                (0, index_1.expectEqual)(elevator.requests.length, 0, 'hasPickup requests length');
+                (0, index_1.expectEqual)(elevator.riders[0], request, 'hasPickup riders entry');
             },
         },
         {
@@ -216,12 +175,12 @@ function buildMethodCases() {
             coveredMethods: ['hasDropoff'],
             requirementKeys: ['methods'],
             run: dependencies => {
-                const elevator = createElevator(dependencies);
-                const rider = createPerson(dependencies, 'Anne', 1, 3);
+                const elevator = (0, index_1.createElevator)(dependencies);
+                const rider = (0, index_1.createPerson)(dependencies, 'Anne', 1, 3);
                 elevator.riders.push(rider);
                 elevator.currentFloor = 3;
                 elevator.hasDropoff();
-                expectEqual(elevator.riders.length, 0, 'hasDropoff riders length');
+                (0, index_1.expectEqual)(elevator.riders.length, 0, 'hasDropoff riders length');
             },
         },
         {
@@ -231,8 +190,8 @@ function buildMethodCases() {
             coveredMethods: ['checkReturnToLoby'],
             requirementKeys: ['methods'],
             run: dependencies => {
-                const elevator = createElevator(dependencies);
-                expectEqual(elevator.checkReturnToLoby(), false, 'checkReturnToLoby');
+                const elevator = (0, index_1.createElevator)(dependencies);
+                (0, index_1.expectEqual)(elevator.checkReturnToLoby(), false, 'checkReturnToLoby');
             },
         },
         {
@@ -242,11 +201,11 @@ function buildMethodCases() {
             coveredMethods: ['returnToLoby'],
             requirementKeys: ['methods'],
             run: dependencies => {
-                const elevator = createElevator(dependencies);
+                const elevator = (0, index_1.createElevator)(dependencies);
                 elevator.currentFloor = 4;
                 elevator.returnToLoby();
-                expectEqual(elevator.currentFloor, 0, 'returnToLoby currentFloor');
-                expectEqual(elevator.floorsTraversed, 4, 'returnToLoby floorsTraversed');
+                (0, index_1.expectEqual)(elevator.currentFloor, 0, 'returnToLoby currentFloor');
+                (0, index_1.expectEqual)(elevator.floorsTraversed, 4, 'returnToLoby floorsTraversed');
             },
         },
         {
@@ -256,15 +215,15 @@ function buildMethodCases() {
             coveredMethods: ['reset'],
             requirementKeys: ['methods'],
             run: dependencies => {
-                const elevator = createElevator(dependencies);
-                const rider = createPerson(dependencies, 'Dana', 2, 6);
+                const elevator = (0, index_1.createElevator)(dependencies);
+                const rider = (0, index_1.createPerson)(dependencies, 'Dana', 2, 6);
                 elevator.currentFloor = 6;
                 elevator.stops = 3;
                 elevator.floorsTraversed = 9;
                 elevator.requests.push(rider);
                 elevator.riders.push(rider);
                 elevator.reset();
-                expectSnapshot(elevator, {
+                (0, index_1.expectSnapshot)(elevator, {
                     currentFloor: 0,
                     stops: 0,
                     floorsTraversed: 0,
@@ -280,87 +239,19 @@ exports.LEVEL2_TEST_CASES = [
     ...buildMethodCases(),
 ];
 function runLevel2TestCase(testCase, dependencies, options = {}) {
-    const silent = options.silent ?? true;
-    const logs = [];
-    const consoleMethods = ['log', 'warn', 'error'];
-    const originalConsole = {
-        log: console.log,
-        warn: console.warn,
-        error: console.error,
-    };
-    const record = (level, values) => {
-        logs.push({
-            level,
-            text: values.map(formatValue).join(' '),
-        });
-    };
-    for (const methodName of consoleMethods) {
-        console[methodName] = (...values) => {
-            record(methodName, values);
-            if (!silent) {
-                originalConsole[methodName](...values);
-            }
-        };
-    }
-    const startedAt = Date.now();
-    let error = null;
-    try {
-        testCase.run(dependencies);
-    }
-    catch (caughtError) {
-        error = caughtError instanceof Error ? caughtError.message : String(caughtError);
-    }
-    finally {
-        console.log = originalConsole.log;
-        console.warn = originalConsole.warn;
-        console.error = originalConsole.error;
-    }
-    return {
-        id: testCase.id,
-        title: testCase.title,
-        category: testCase.category,
-        coveredMethods: [...testCase.coveredMethods],
-        requirementKeys: [...testCase.requirementKeys],
-        pass: error === null,
-        durationMs: Date.now() - startedAt,
-        logs,
-        error,
-    };
-}
-function buildCoverageItems(names, results, selector) {
-    return names.map(name => {
-        const relevantResults = results.filter(result => selector(result).includes(name));
-        return {
-            name,
-            pass: relevantResults.length > 0 && relevantResults.every(result => result.pass),
-        };
-    });
-}
-function buildRequirementStatus(results, methods) {
-    const byId = new Map(results.map(result => [result.id, result]));
-    return {
-        'scenario-up': byId.get('person-a-up')?.pass ?? false,
-        'scenario-down': byId.get('person-a-down')?.pass ?? false,
-        'metrics': ['person-a-up', 'person-a-down'].every(id => byId.get(id)?.pass),
-        'methods': methods.every(method => method.pass),
-    };
+    return (0, index_1.runSuiteTestCase)(testCase, dependencies, options);
 }
 function runLevel2Suite(dependencies, options = {}) {
     const results = exports.LEVEL2_TEST_CASES.map(testCase => runLevel2TestCase(testCase, dependencies, options));
-    const passed = results.filter(result => result.pass).length;
-    const failed = results.length - passed;
-    const scenarios = buildCoverageItems(exports.LEVEL2_SCENARIOS.map(scenario => scenario.title), results, result => result.category === 'scenario' ? [result.title] : []);
-    const methods = buildCoverageItems(exports.LEVEL2_ELEVATOR_METHODS, results, result => result.coveredMethods);
+    const summary = (0, index_1.buildSuiteSummary)(results);
+    const scenarios = (0, index_1.buildCoverageItems)(exports.LEVEL2_SCENARIOS.map(scenario => scenario.title), results, result => result.category === 'scenario' ? [result.title] : []);
+    const methods = (0, index_1.buildCoverageItems)(exports.LEVEL2_ELEVATOR_METHODS, results, result => result.coveredMethods);
     return {
         results,
-        summary: {
-            total: results.length,
-            passed,
-            failed,
-        },
+        summary,
         scenarios,
         methods,
-        requirements: buildRequirementStatus(results, methods),
+        requirements: (0, index_1.buildRequirementStatus)(exports.LEVEL2_REQUIREMENTS, results),
     };
 }
 //# sourceMappingURL=level2-suite.js.map
