@@ -6,6 +6,7 @@ export interface SuitePersonLike {
 
 export interface SuiteElevatorConfig {
     idlePolicy?: 'none' | 'time-based';
+    dispatchStrategy?: 'fifo' | 'optimized';
     now?: () => Date;
 }
 

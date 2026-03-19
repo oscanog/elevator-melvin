@@ -518,6 +518,10 @@ document.addEventListener('DOMContentLoaded', () => {
       simOptions.idlePolicy = level.simulationOptions.idlePolicy;
     }
 
+    if (level.simulationOptions?.dispatchStrategy) {
+      simOptions.dispatchStrategy = level.simulationOptions.dispatchStrategy;
+    }
+
     if (fixedTime) {
       const [hours, minutes] = fixedTime.split(':').map(value => Number.parseInt(value, 10));
       simOptions.now = () => {

@@ -8,113 +8,166 @@ class Elevator {
         this.requests = [];
         this.riders = [];
         this.idlePolicy = config.idlePolicy ?? 'none';
+        this.dispatchStrategy = config.dispatchStrategy ?? 'fifo';
         this.now = config.now ?? (() => new Date());
     }
     dispatch() {
-        while (this.requests.length > 0) {
-            this.goToFloor(this.requests[0]);
+        if (this.dispatchStrategy === 'optimized') {
+            this.dispatchOptimized();
+        }
+        else {
+            this.dispatchFifo();
         }
         if (this.checkReturnToLoby()) {
-            console.log('Returning to lobby');
             this.returnToLoby();
         }
     }
+    dispatchFifo() {
+        while (this.requests.length > 0) {
+            this.goToFloor(this.requests[0]);
+        }
+    }
+    dispatchOptimized() {
+        this.serviceCurrentFloor();
+        for (const floor of this.buildOptimizedPlan()) {
+            this.moveToFloor(floor);
+            this.serviceCurrentFloor();
+        }
+    }
     goToFloor(person) {
-        console.log('!!! ENTERING goToFloor !!!');
-        console.log('Person:', person);
-        console.log('Current floor:', this.currentFloor);
-        console.log('Requests:', this.requests);
-        // Move to pick up floor
-        console.log('Moving to pickup floor:', person.currentFloor);
-        while (this.currentFloor < person.currentFloor) {
-            console.log('Moving up from', this.currentFloor, 'to', this.currentFloor + 1);
-            this.moveUp();
-        }
-        while (this.currentFloor > person.currentFloor) {
-            console.log('Moving down from', this.currentFloor, 'to', this.currentFloor - 1);
-            this.moveDown();
-        }
-        console.log('Arrived at pickup floor:', this.currentFloor);
+        this.moveToFloor(person.currentFloor);
         this.hasPickup(person);
-        // Move to drop off floor
-        console.log('Moving to dropoff floor:', person.dropOffFloor);
-        while (this.currentFloor < person.dropOffFloor) {
+        this.moveToFloor(person.dropOffFloor);
+        this.hasDropoff(person);
+    }
+    moveToFloor(targetFloor) {
+        while (this.currentFloor < targetFloor) {
             this.moveUp();
         }
-        while (this.currentFloor > person.dropOffFloor) {
+        while (this.currentFloor > targetFloor) {
             this.moveDown();
         }
-        console.log('Arrived at dropoff floor:', this.currentFloor);
-        this.hasDropoff(person);
-        console.log('=== goToFloor end ===');
     }
     moveUp() {
-        console.log('moveUp called');
         this.currentFloor++;
         this.floorsTraversed++;
     }
     moveDown() {
-        console.log('moveDown called');
         if (this.currentFloor > 0) {
             this.currentFloor--;
             this.floorsTraversed++;
         }
     }
     hasStop() {
-        // Check for pickup
-        let hasPickup = false;
-        for (let i = 0; i < this.requests.length; i++) {
-            if (this.requests[i].currentFloor === this.currentFloor) {
-                hasPickup = true;
-                break;
-            }
-        }
-        // Check for dropoff
-        let hasDropoff = false;
-        for (let i = 0; i < this.riders.length; i++) {
-            if (this.riders[i].dropOffFloor === this.currentFloor) {
-                hasDropoff = true;
-                break;
-            }
-        }
-        console.log('hasStop check:', { currentFloor: this.currentFloor, hasPickup, hasDropoff, requestsLength: this.requests.length, ridersLength: this.riders.length });
-        return hasPickup || hasDropoff;
+        return this.requests.some(request => request.currentFloor === this.currentFloor)
+            || this.riders.some(rider => rider.dropOffFloor === this.currentFloor);
     }
     hasPickup(targetPerson) {
-        console.log('=== hasPickup ===');
-        console.log('Current floor:', this.currentFloor);
-        console.log('Requests:', this.requests);
         const index = targetPerson
-            ? this.requests.findIndex(req => req === targetPerson)
-            : this.requests.findIndex(req => req.currentFloor === this.currentFloor);
+            ? this.requests.findIndex(request => request === targetPerson)
+            : this.requests.findIndex(request => request.currentFloor === this.currentFloor);
         if (index !== -1 && this.requests[index].currentFloor === this.currentFloor) {
             const person = this.requests.splice(index, 1)[0];
             this.riders.push(person);
             this.stops++;
-            console.log('Picked up person:', person);
-            console.log('Requests after splice:', this.requests);
-            console.log('Riders after push:', this.riders);
+            return true;
         }
-        else {
-            console.log('No request found at current floor');
-        }
+        return false;
     }
     hasDropoff(targetPerson) {
-        console.log('=== hasDropoff ===');
-        console.log('Current floor:', this.currentFloor);
-        console.log('Riders:', this.riders);
         const index = targetPerson
             ? this.riders.findIndex(rider => rider === targetPerson)
             : this.riders.findIndex(rider => rider.dropOffFloor === this.currentFloor);
         if (index !== -1 && this.riders[index].dropOffFloor === this.currentFloor) {
             this.riders.splice(index, 1);
             this.stops++;
-            console.log('Dropped off person at index', index);
-            console.log('Riders after splice:', this.riders);
+            return true;
         }
-        else {
-            console.log('No rider to drop off at current floor');
-        }
+        return false;
+    }
+    serviceCurrentFloor() {
+        let progressed = false;
+        do {
+            progressed = false;
+            while (this.hasDropoff()) {
+                progressed = true;
+            }
+            while (this.hasPickup()) {
+                progressed = true;
+            }
+        } while (progressed);
+    }
+    buildOptimizedPlan() {
+        const people = Array.from(new Set([...this.requests, ...this.riders]));
+        const items = people.map(person => ({
+            person,
+            pickupFloor: person.currentFloor,
+            dropOffFloor: person.dropOffFloor,
+            startsOnboard: this.riders.includes(person),
+        }));
+        const allDeliveredMask = items.length === 0 ? 0 : (1 << items.length) - 1;
+        const initialPickedMask = items.reduce((mask, item, index) => (item.startsOnboard ? mask | (1 << index) : mask), 0);
+        const memo = new Map();
+        const normalize = (floor, pickedMask, deliveredMask) => {
+            let nextPickedMask = pickedMask;
+            let nextDeliveredMask = deliveredMask;
+            for (let index = 0; index < items.length; index++) {
+                const bit = 1 << index;
+                const item = items[index];
+                if ((nextPickedMask & bit) === 0 && item.pickupFloor === floor) {
+                    nextPickedMask |= bit;
+                }
+                if ((nextPickedMask & bit) !== 0
+                    && (nextDeliveredMask & bit) === 0
+                    && item.dropOffFloor === floor) {
+                    nextDeliveredMask |= bit;
+                }
+            }
+            return {
+                pickedMask: nextPickedMask,
+                deliveredMask: nextDeliveredMask,
+            };
+        };
+        const search = (floor, pickedMask, deliveredMask) => {
+            const normalizedState = normalize(floor, pickedMask, deliveredMask);
+            const key = `${floor}|${normalizedState.pickedMask}|${normalizedState.deliveredMask}`;
+            const cached = memo.get(key);
+            if (cached) {
+                return cached;
+            }
+            if (normalizedState.deliveredMask === allDeliveredMask) {
+                const completed = { cost: 0, stops: [] };
+                memo.set(key, completed);
+                return completed;
+            }
+            const candidateFloors = new Set();
+            for (let index = 0; index < items.length; index++) {
+                const bit = 1 << index;
+                const item = items[index];
+                if ((normalizedState.pickedMask & bit) === 0) {
+                    candidateFloors.add(item.pickupFloor);
+                    continue;
+                }
+                if ((normalizedState.deliveredMask & bit) === 0) {
+                    candidateFloors.add(item.dropOffFloor);
+                }
+            }
+            let best = null;
+            for (const nextFloor of candidateFloors) {
+                const tail = search(nextFloor, normalizedState.pickedMask, normalizedState.deliveredMask);
+                const candidate = {
+                    cost: Math.abs(nextFloor - floor) + tail.cost,
+                    stops: [nextFloor, ...tail.stops],
+                };
+                if (best === null || candidate.cost < best.cost) {
+                    best = candidate;
+                }
+            }
+            const result = best ?? { cost: 0, stops: [] };
+            memo.set(key, result);
+            return result;
+        };
+        return search(this.currentFloor, initialPickedMask, 0).stops;
     }
     checkReturnToLoby() {
         if (this.idlePolicy !== 'time-based') {
@@ -126,9 +179,7 @@ class Elevator {
         return this.now().getHours() < 12;
     }
     returnToLoby() {
-        while (this.currentFloor > 0) {
-            this.moveDown();
-        }
+        this.moveToFloor(0);
     }
     reset() {
         this.currentFloor = 0;

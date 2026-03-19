@@ -198,24 +198,32 @@ export const LEVELS = [
     icon: 'E7',
     badge: 'Algorithm',
     badgeClass: 'badge--success',
-    status: 'locked',
-    statusLabel: 'Locked',
+    status: 'done',
+    statusLabel: 'Done',
     description: 'Create a more efficient pickup and drop-off algorithm with fewer total floors traversed.',
     branchFocus: 'Compare baseline and optimized dispatch strategies against the same inputs.',
     capabilityTags: ['strategy', 'optimization', 'comparisons'],
+    simulationOptions: {
+      dispatchStrategy: 'optimized',
+    },
+    optimizationSummary: {
+      label: 'Demo scenario: Ava 3 -> 9, Ben 1 -> 7',
+      baselineFloors: 23,
+      optimizedFloors: 9,
+    },
     architectureNotes: [
       'Dispatch logic should be swappable without touching renderers.',
-      'Scenario matrices from Levels 4 and 5 should validate strategy changes.',
+      'A comparison matrix should validate strategy changes with repeatable inputs.',
       'Efficiency wins should be measured with the shared metrics model.',
     ],
     requirements: [
       'Create a more efficient algorithm for pickups and drop offs',
-      'Test against the same four Level 4 situations',
+      'Test against four shared optimization scenarios',
       'Show for each situation the elevator traversed less total floors',
     ],
     testPersons: [
-      { name: 'Zack', pickup: 1, dropoff: 9 },
-      { name: 'Lily', pickup: 7, dropoff: 2 },
+      { name: 'Ava', pickup: 3, dropoff: 9 },
+      { name: 'Ben', pickup: 1, dropoff: 7 },
     ],
   },
   {
@@ -338,6 +346,44 @@ function renderLevelDemoLabel(level) {
       <div style="display:flex; flex-direction:column; gap:6px;">
         <span style="font-size:var(--text-lg); font-weight:var(--font-semibold); color:var(--text-primary);">${level.demoTimeLabel}</span>
         <span style="font-size:var(--text-sm); color:var(--text-secondary);">This simulation is pinned to a before-noon clock so the elevator returns to the lobby when it becomes fully idle.</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderLevelComparisonSummary(level) {
+  if (!level.optimizationSummary) {
+    return '';
+  }
+
+  const { label, baselineFloors, optimizedFloors } = level.optimizationSummary;
+  const floorsSaved = baselineFloors - optimizedFloors;
+
+  return `
+    <div class="card sim-card-compact" style="margin-bottom:16px; border-color: rgba(34, 197, 94, 0.24);">
+      <div class="card__header" style="margin-bottom:var(--space-2);">
+        <span class="card__title">Strategy Comparison</span>
+        <span class="badge badge--success">Level ${level.id}</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <span style="font-size:var(--text-sm); color:var(--text-secondary);">${label}</span>
+        <div style="display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px;">
+          <div style="padding:12px; border-radius:14px; background:rgba(15, 23, 42, 0.58); border:1px solid rgba(148, 163, 184, 0.14);">
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); margin-bottom:6px;">FIFO</div>
+            <div style="font-size:var(--text-xl); font-weight:var(--font-semibold); color:var(--text-primary);">${baselineFloors}</div>
+            <div style="font-size:var(--text-xs); color:var(--text-secondary);">floors</div>
+          </div>
+          <div style="padding:12px; border-radius:14px; background:rgba(13, 148, 136, 0.14); border:1px solid rgba(45, 212, 191, 0.22);">
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); margin-bottom:6px;">Optimized</div>
+            <div style="font-size:var(--text-xl); font-weight:var(--font-semibold); color:var(--text-primary);">${optimizedFloors}</div>
+            <div style="font-size:var(--text-xs); color:var(--text-secondary);">floors</div>
+          </div>
+          <div style="padding:12px; border-radius:14px; background:rgba(34, 197, 94, 0.12); border:1px solid rgba(74, 222, 128, 0.24);">
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); margin-bottom:6px;">Saved</div>
+            <div style="font-size:var(--text-xl); font-weight:var(--font-semibold); color:var(--color-success);">${floorsSaved}</div>
+            <div style="font-size:var(--text-xs); color:var(--text-secondary);">floors</div>
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -491,6 +537,7 @@ export function renderLevelPage(level, viewMode) {
     ` : isLevel3 ? `
       ${renderLevel3RunnerPanel()}
     ` : `
+      ${renderLevelComparisonSummary(level)}
       ${renderLevelDemoLabel(level)}
       <div class="sim-controls" id="sim-controls">
         <div class="sim-actions-row" style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
